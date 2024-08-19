@@ -1,2 +1,2 @@
 # algonquin-timetable-to-ics
-Convert Algonquin College timetable .RTF to iCalendar .ICS file
+Convert an Algonquin College timetable stored as .rtf to an iCalendar .ics file.
