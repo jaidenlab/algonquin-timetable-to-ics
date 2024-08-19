@@ -1,37 +1,42 @@
+import tkinter as tk
+from tkinter import filedialog
+
+import uuid
+import argparse
 import logging
 import icalendar
 import datetime
 import re
-import pytz
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(filename='debug.log', filemode='w', level=logging.DEBUG)
 
 # Paste paths to .ics and .rtf file here
 TIMETABLE_FILEPATH = ''
 ICS_FILEPATH = ''
 
-class ScheduleConverter():
+logger = logging.getLogger(__name__)
+
+parser = argparse.ArgumentParser(
+    prog="Algonquin timetable to .ics",
+    description="Converts a .rtf file to a .ics file",
+    epilog="Written by Jaiden L"
+)
+parser.add_argument("-i", "--input", help = "Path to .rtf file")
+parser.add_argument("-o", "--output", help = "Path to save .ics file")
+
+class Timetable():
     def __init__(self) -> None:
-        self.tz = pytz.timezone('America/Toronto')
-        self.__init_calendar()
-        self.course_name_replacements = {} # old name, new name
-        self.existing_uids = [] # List of existing uids just in case
-    
-    def __init_calendar(self) -> None:
         self.calendar = icalendar.Calendar()
+        self.course_name_replacements = {} # old name, new name
 
         # TODO: Explain this
-        # Necessary fields to make the calendar work
-        self.calendar.add('PRODID', '-//My calendar product//mxm.dk//')
-        self.calendar.add('VERSION', '2.0')
+        self.calendar.add("PRODID", "-//My calendar product//mxm.dk//")
+        self.calendar.add("VERSION", "2.0")
 
         # TODO: Document this better
         # Create timezone for America/Toronto
         timezone = icalendar.Timezone()
-        timezone.add('TZID', 'America/Toronto')
-        
-        # TODO: Use pytz timezone to get this information?
+        timezone.add("TZID", "America/Toronto")
+
+        # TODO: Use pytz to get this information?
         # EDT timezone info
         daylight_timezone = icalendar.TimezoneDaylight()
         daylight_timezone.add('TZOFFSETFROM', datetime.timedelta(hours=-5))
@@ -52,15 +57,6 @@ class ScheduleConverter():
         timezone.add_component(daylight_timezone)
         timezone.add_component(standard_timezone)
         self.calendar.add_component(timezone)
-
-    def __generate_uid(self) -> str:
-        while True:
-            uid = f'{datetime.datetime.now()}@unique.id'
-            if uid not in self.existing_uids:
-                self.existing_uids.append(uid) # Add UID to list of existing UIDs
-                return uid
-            else:
-                logger.warning('UID already exists')
 
     def addCourseFromParagraph(self, paragraph) -> None:
         logger.debug(f'Parsing paragraph: {paragraph}')
@@ -125,7 +121,7 @@ class ScheduleConverter():
         event.add('DTSTART', dtstart)
         event.add('DTEND', dtend)
         event.add('DTSTAMP', dtstamp)
-        event.add('UID', self.__generate_uid())
+        event.add('UID', uuid.uuid4())
         event.add('RRULE', {'FREQ': 'WEEKLY', 'UNTIL': course_expiry, 'BYDAY': weekday[:2]})
 
         # Log event in ical format
@@ -134,7 +130,7 @@ class ScheduleConverter():
         # Add event to calendar
         self.calendar.add_component(event)
 
-    def loadTimetableFile(self, filepath) -> None:
+    def loadFile(self, filepath) -> None:
         with open(filepath, 'r', encoding='UTF-8') as file:
             # Split the text into paragraphs
             current_paragraph = ''
@@ -150,28 +146,17 @@ class ScheduleConverter():
             if current_paragraph:
                 self.addCourseFromParagraph(current_paragraph)
 
-    def outputiCalFile(self, filepath) -> None:
+    def saveFile(self, filepath) -> None:
         with open(filepath, 'wb') as file:
             file.write(self.calendar.to_ical())
             logger.debug(f'Calendar written to: {filepath}')
 
-
 def main():
     logger.debug('main function entered')
-    converter = ScheduleConverter()
-    converter.loadTimetableFile(TIMETABLE_FILEPATH)
-    converter.outputiCalFile(ICS_FILEPATH)
+    converter = Timetable()
+    converter.loadFile(TIMETABLE_FILEPATH)
+    converter.saveFile(ICS_FILEPATH)
     logger.debug('main function finished')
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
