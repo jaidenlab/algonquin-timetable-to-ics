@@ -1,42 +1,31 @@
-import tkinter as tk
-from tkinter import filedialog
-
-import uuid
-import argparse
 import logging
-import icalendar
-import datetime
+import icalendar # pip install icalendar
 import re
+import datetime
+import pytz
+import uuid
 
-# Paste paths to .ics and .rtf file here
-TIMETABLE_FILEPATH = ''
-ICS_FILEPATH = ''
+# Module level dunders
+__version__ = "1.0"
 
 logger = logging.getLogger(__name__)
 
-parser = argparse.ArgumentParser(
-    prog="Algonquin timetable to .ics",
-    description="Converts a .rtf file to a .ics file",
-    epilog="Written by Jaiden L"
-)
-parser.add_argument("-i", "--input", help = "Path to .rtf file")
-parser.add_argument("-o", "--output", help = "Path to save .ics file")
-
-class Timetable():
+class Timetable:
     def __init__(self) -> None:
+        self.tz = pytz.timezone('America/Toronto')
         self.calendar = icalendar.Calendar()
-        self.course_name_replacements = {} # old name, new name
+        self.course_names = {} # original name, final name
 
-        # TODO: Explain this
-        self.calendar.add("PRODID", "-//My calendar product//mxm.dk//")
-        self.calendar.add("VERSION", "2.0")
+        # Product Identifier https://www.kanzaki.com/docs/ical/prodid.html
+        self.calendar.add("PRODID", "Algonquin timetable to .ics")
+        self.calendar.add("VERSION", "2.0") # iCalendar spec version
 
         # TODO: Document this better
         # Create timezone for America/Toronto
         timezone = icalendar.Timezone()
-        timezone.add("TZID", "America/Toronto")
-
-        # TODO: Use pytz to get this information?
+        timezone.add('TZID', 'America/Toronto')
+        
+        # TODO: Use pytz timezone to get this information?
         # EDT timezone info
         daylight_timezone = icalendar.TimezoneDaylight()
         daylight_timezone.add('TZOFFSETFROM', datetime.timedelta(hours=-5))
@@ -58,8 +47,9 @@ class Timetable():
         timezone.add_component(standard_timezone)
         self.calendar.add_component(timezone)
 
-    def addCourseFromParagraph(self, paragraph) -> None:
-        logger.debug(f'Parsing paragraph: {paragraph}')
+    def addCourse(self, str) -> None:
+        """Add course event from paragraph"""
+        logger.debug(f"Parsing paragraph: {str}")
 
         match = re.search(r"""
             Course\sName.\s(?P<name>.+?)\s+ # Course name
@@ -73,15 +63,14 @@ class Timetable():
             Start\sDate:\s(?P<start_date>.+?)\s+ # Date first class takes place (06-May-2024)
             End\sDate:\s(?P<end_date>.+?)\s+ # Date last class takes place (05-Aug-2024)
             Academic\sPenalty\sWithdrawal\sDate:\s(?P<penalty_date>.+)\s* # Final penalty-free withdrawal date
-        """, paragraph, re.VERBOSE)
+        """, str, re.VERBOSE)
 
         if match == None:
-            logger.error(f'Unknown course format: {paragraph}')
-            return
+            raise ValueError("Unknown course format", str)
         
         groups = match.groupdict()
 
-        # Log all groups for easy debugging
+        # Log all groups
         logger.debug(groups)
 
         # Format for dates and times in the paragraph
@@ -107,10 +96,10 @@ class Timetable():
         dtstart = datetime.datetime.combine(class_date, class_start_time, tzinfo=self.tz)
         dtend = datetime.datetime.combine(class_date, class_end_time, tzinfo=self.tz)
         dtstamp = datetime.datetime.now(tz=self.tz)
-        
+
         # Optionally replace course names with friendlier versions
-        new_name = self.course_name_replacements.get(name) or input(f'"{name}"? ').strip() or name
-        self.course_name_replacements.update({name: new_name}) # Remember choice for duplicate course names (Ex: Theory/Lab)
+        new_name = self.course_names.get(name) or input(f'"{name}"? ').strip() or name
+        self.course_names.update({name: new_name}) # Remember choice for duplicate course names (Ex: Theory/Lab)
 
         # Name to use in calendar event
         event_name = f'{room} {new_name} ({delivery})'
@@ -152,11 +141,40 @@ class Timetable():
             logger.debug(f'Calendar written to: {filepath}')
 
 def main():
-    logger.debug('main function entered')
-    converter = Timetable()
-    converter.loadFile(TIMETABLE_FILEPATH)
-    converter.saveFile(ICS_FILEPATH)
-    logger.debug('main function finished')
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="Algonquin timetable to .ics",
+        description="Converts a .rtf file to a .ics file",
+        epilog="Written by Jaiden L"
+    )
+
+    # Version information
+    parser.add_argument("-V", "--version", action="version", version="%(prog)s {version}".format(version=__version__))
+
+    # File paths
+    parser.add_argument("input", help="Path to .rtf file")
+    parser.add_argument("output", help="Path to save .ics file")
+    
+    # Logging level (default: WARNING)
+    parser.add_argument("-v", "--verbose", help="Set logging level to INFO", action="store_const", dest="loglevel", const=logging.INFO, default=logging.WARNING)
+    parser.add_argument("-d", "--debug", help="Set logging level to DEBUG", action="store_const", dest="loglevel", const=logging.DEBUG)
+    
+    args = parser.parse_args()
+    logging.basicConfig(level=args.loglevel)
+
+    timetable = Timetable()
+    try:
+        timetable.loadFile(args.input)
+    except IOError as e:
+        logger.error("Failed to load input file")
+        raise
+
+    try:
+        timetable.saveFile(args.output)
+    except IOError as e:
+        logger.error("Failed to save output file")
+        raise
 
 if __name__ == "__main__":
     main()
