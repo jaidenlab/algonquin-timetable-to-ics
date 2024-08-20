@@ -126,14 +126,14 @@ class Timetable:
             for line in file:
                 if line == '\n':
                     if current_paragraph:
-                        self.addCourseFromParagraph(current_paragraph)
+                        self.addCourse(current_paragraph)
                         current_paragraph = ''
                     continue
                 current_paragraph += line
 
             # No newline at end of file, still parse the data
             if current_paragraph:
-                self.addCourseFromParagraph(current_paragraph)
+                self.addCourse(current_paragraph)
 
     def saveFile(self, filepath) -> None:
         with open(filepath, 'wb') as file:
@@ -155,6 +155,9 @@ def main():
     # File paths
     parser.add_argument("input", help="Path to .rtf file")
     parser.add_argument("output", help="Path to save .ics file")
+
+    # inputFilename = args.input or filedialog.askopenfile(filetypes=[("Rich Text Format", ".rtf")])
+    # outputFilename = args.output or filedialog.asksaveasfile(filetypes=[("iCalendar file", ".ics")])
     
     # Logging level (default: WARNING)
     parser.add_argument("-v", "--verbose", help="Set logging level to INFO", action="store_const", dest="loglevel", const=logging.INFO, default=logging.WARNING)
