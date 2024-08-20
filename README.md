@@ -17,7 +17,7 @@ pip install -r /path/to/requirements.txt
 
 The python script `main.py` should be ran from the command line like so
 ```
-python /path/to/main.py [-h] [-V] [-v] [-d] /path/to/input.rtf /path/to/output.ics
+python /path/to/main.py [-h] [-V] [-v] [-d] input.rtf output.ics
 ```
 
 There are a few arguments available
