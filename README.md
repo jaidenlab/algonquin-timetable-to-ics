@@ -32,4 +32,20 @@ options:
   -v, --verbose  Set logging level to INFO
   -d, --debug    Set logging level to DEBUG
 ```
+## Importing .ics file into another program
+The ICS format is a universal calendar file format that all popular calendar applications support.  
+Examples include but are not limited to:
+- Microsoft Outlook
+- Google Calendar
+- Apple Calendar
+
+### Google Calendar
+1. Open google calendar and click the ➕ next to **Other calendars**.  
+![image](https://github.com/user-attachments/assets/f8828535-62d9-4366-8917-ffbf440281c5)
+2. Click the **import** button from the dropdown menu.  
+![image](https://github.com/user-attachments/assets/fc457568-ed1d-4a08-a0e9-25a9264a6ba9)
+3. Choose the calendar you wish to add the timetable to and click the **Select file from your computer** button.  
+![image](https://github.com/user-attachments/assets/9151034a-2903-43af-937b-4d8bf4147d1c)
+
+
 
