@@ -13,6 +13,13 @@ A python3 environment is required to run this script
 pip install -r /path/to/requirements.txt
 ```
 
+### Obtaining the .rtf file
+1. Login to [ACSIS](https://acsis.algonquincollege.com/students/).
+2. Go to **View TimeTable** under **Courses**.
+3. Click the **Export to RTF** button.  
+![image](https://github.com/user-attachments/assets/280e3a94-5ef6-4429-a8df-e95acdc8a41e)
+
+
 ## Usage
 
 The python script `main.py` should be ran from the command line like so
