@@ -1,6 +1,9 @@
 # algonquin-timetable-to-ics
 Convert an Algonquin College timetable stored as .rtf to an iCalendar .ics file.
 
+> [!WARNING]
+> This program ignores holidays and breaks. Class events must manually be removed for those days. 
+
 ## Getting Started
 
 A python3 environment is required to run this script
